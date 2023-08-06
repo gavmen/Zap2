@@ -20,6 +20,9 @@ var upgrader = websocket.Upgrader{
 func handleConnections(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Connection Header:", r.Header.Get("Connection"))
 	fmt.Println("Upgrade Header:", r.Header.Get("Upgrade"))
+
+	user := r.URL.Query().Get("user")
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Error upgrading connection:", err)
@@ -27,11 +30,16 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	client := &internal.Client{Socket: conn, Send: make(chan []byte)}
+	client := &internal.Client{
+		Socket: conn,
+		Send:   make(chan []byte),
+		User:   user,
+	}
+
 	internal.Manager.Register <- client
 
-	go client.Read()
 	go client.Write()
+	client.Read()
 }
 
 func main() {

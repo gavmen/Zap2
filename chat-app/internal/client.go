@@ -7,6 +7,7 @@ import (
 type Client struct {
 	Socket *websocket.Conn
 	Send   chan []byte
+	User   string
 }
 
 func (c *Client) Read() {
