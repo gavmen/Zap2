@@ -1,6 +1,9 @@
 package internal
 
 type Message struct {
-	Sender  string `json:"sender"`
-	Content string `json:"content"`
+	ID        int
+	UserID    int
+	Sender    string
+	Recipient string
+	Content   string
 }

@@ -66,3 +66,7 @@ func (m *manager) BroadcastToUser(user string, message []byte) {
 		}
 	}
 }
+
+func (m *manager) BroadcastMessage(user string, message []byte) {
+	m.BroadcastToUser(user, message)
+}
