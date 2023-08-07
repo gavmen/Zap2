@@ -27,12 +27,20 @@ function displayMessage(message) {
 }
 
 function sendMessage(message) {
+    console.log("WebSocket state before sending:", socket.readyState);
+
     if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ sender: userId, content: message })); // Use userId here
+        socket.send(JSON.stringify({ sender: userId, content: message }));
+        console.log("Message sent!");
+        console.log(userId)
+        console.log(sender);
+        console.log(content);
+        console.log(message)
     } else {
         console.log("WebSocket is not in the OPEN state.");
     }
 }
+
 
 sendButton.addEventListener("click", () => {
     const message = messageInput.value;

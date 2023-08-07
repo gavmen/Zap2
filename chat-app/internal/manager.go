@@ -1,5 +1,10 @@
 package internal
 
+import (
+	// "log"
+	"fmt"
+)
+
 type manager struct {
 	Clients     map[*Client]bool
 	UserClients map[string]map[*Client]bool
@@ -26,6 +31,7 @@ func (m *manager) Start() {
 				m.UserClients[client.User] = make(map[*Client]bool)
 			}
 			m.UserClients[client.User][client] = true
+			fmt.Println("Registered client:", client.User)
 		case client := <-m.Unregister:
 			if _, ok := m.Clients[client]; ok {
 				close(client.Send)
@@ -66,3 +72,11 @@ func (m *manager) BroadcastToUser(user string, message []byte) {
 		}
 	}
 }
+
+// func (m *manager) GetUsers() []string {
+// 	users := make([]string, 0, len(m.UserClients))
+// 	for user := range m.UserClients {
+// 		users = append(users, user)
+// 	}
+// 	return users
+// }
