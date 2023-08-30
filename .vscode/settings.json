@@ -13,5 +13,6 @@
             "username": "gabriel",
             "name": "teste"
         }
-    ]
+    ],
+    "dotnet.defaultSolution": "EncryptionAPI/EncryptionAPI.sln"
 }
