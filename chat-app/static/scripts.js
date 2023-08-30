@@ -2,6 +2,24 @@ const userId = prompt("Enter your username:");
 const socket = new WebSocket(`ws://${window.location.host}/ws?user=${encodeURIComponent(userId)}`);
 console.log("WebSocket state:", socket.readyState);
 
+
+// import { createConnection } from 'mysql';
+
+// var con = createConnection({
+//   host: "localhost",
+//   user: "gabriel",
+//   password: "password",
+//   database: "chat_app_bd"
+// });
+
+// con.connect(function(err) {
+//   if (err) throw err;
+//   con.query("SELECT * FROM user", function (err, result, fields) {
+//     if (err) throw err;
+//     console.log(result);
+//   });
+// });
+
 socket.onopen = () => {
     console.log("WebSocket is now open.");
 };
@@ -23,16 +41,26 @@ socket.onmessage = (event) => {
 function displayMessage(message) {
     const messageElement = document.createElement("div");
     messageElement.textContent = message.sender + ": " + message.content;
+    // messageElement = messageElement + oldmessageElement
     chatBox.appendChild(messageElement);
 }
 
 function sendMessage(message) {
+    console.log("WebSocket state before sending:", socket.readyState);
+
     if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ sender: userId, content: message })); // Use userId here
+        socket.send(JSON.stringify({ sender: userId, content: message }));
+        internal.InsertMessage(sender, message);
+        console.log("Message sent!");
+        console.log(userId);
+        console.log(sender);
+        console.log(content);
+        console.log(message);
     } else {
         console.log("WebSocket is not in the OPEN state.");
     }
 }
+
 
 sendButton.addEventListener("click", () => {
     const message = messageInput.value;
