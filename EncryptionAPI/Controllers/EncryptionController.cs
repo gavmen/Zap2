@@ -4,12 +4,12 @@ using ChatApp.Services;
 
 public class EncryptionRequest
 {
-    public string PlainText { get; set; }
+    public string? PlainText { get; set; }
 }
 
 public class DecryptionRequest
 {
-    public string CipherText { get; set; }
+    public string? CipherText { get; set; }
 }
 
 
@@ -21,15 +21,17 @@ public class EncryptionController : ControllerBase
 
     public EncryptionController()
     {
-        _encryptionService = new EncryptionService("YourEncryptionKeyHere");
+        string encryptionKey = EncryptionService.GenerateBase64Key();
+        Console.WriteLine($"Generated Key: {encryptionKey}"); // For demonstration purposes
+        _encryptionService = new EncryptionService(encryptionKey);
     }
 
     [HttpPost("encrypt")]
-    public ActionResult<string> Encrypt([FromBody] string plainText)
+    public ActionResult<string> Encrypt([FromBody] EncryptionRequest request)
     {
         try
         {
-            string encryptedText = _encryptionService.EncryptString(plainText);
+            string encryptedText = _encryptionService.EncryptString(request.PlainText);
             return Ok(encryptedText);
         }
         catch (Exception ex)
@@ -39,11 +41,11 @@ public class EncryptionController : ControllerBase
     }
 
     [HttpPost("decrypt")]
-    public ActionResult<string> Decrypt([FromBody] string cipherText)
+    public ActionResult<string> Decrypt([FromBody] DecryptionRequest request)
     {
         try
         {
-            string decryptedText = _encryptionService.DecryptString(cipherText);
+            string decryptedText = _encryptionService.DecryptString(request.CipherText);
             return Ok(decryptedText);
         }
         catch (Exception ex)
