@@ -1,6 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using ChatApp.Services;
 
+
+public class EncryptionRequest
+{
+    public string PlainText { get; set; }
+}
+
+public class DecryptionRequest
+{
+    public string CipherText { get; set; }
+}
+
+
 [ApiController]
 [Route("[controller]")]
 public class EncryptionController : ControllerBase
