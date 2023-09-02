@@ -78,5 +78,42 @@ namespace ChatApp.Services
                 }
             }
         }
+
+                public static (string publicKey, string privateKey) GenerateRSAKeyPair()
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048)) // 2048-bit key
+            {
+                return (rsa.ToXmlString(false), rsa.ToXmlString(true));
+            }
+        }
+
+        public static string GetPublicKey(string privateKey)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.FromXmlString(privateKey);
+                return rsa.ToXmlString(false);
+            }
+        }
+
+        public static string EncryptSymmetricKeyWithPublicKey(string symmetricKey, string recipientPublicKey)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.FromXmlString(recipientPublicKey);
+                byte[] encryptedData = rsa.Encrypt(Encoding.UTF8.GetBytes(symmetricKey), false);
+                return Convert.ToBase64String(encryptedData);
+            }
+        }
+
+        public static string DecryptSymmetricKeyWithPrivateKey(string encryptedSymmetricKey, string recipientPrivateKey)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.FromXmlString(recipientPrivateKey);
+                byte[] decryptedData = rsa.Decrypt(Convert.FromBase64String(encryptedSymmetricKey), false);
+                return Encoding.UTF8.GetString(decryptedData);
+            }
+        }
     }
 }
