@@ -24,13 +24,13 @@ namespace ChatApp.Services
             }
         }
 
-        public static string GenerateBase64Key()
+        public static string GenerateRandomKey()
         {
-            using (Aes aes = Aes.Create())
+            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
             {
-                aes.KeySize = 256; // AES-256
-                aes.GenerateKey();
-                return Convert.ToBase64String(aes.Key);
+                byte[] keyBytes = new byte[32];
+                rng.GetBytes(keyBytes);
+                return Convert.ToBase64String(keyBytes);
             }
         }
 

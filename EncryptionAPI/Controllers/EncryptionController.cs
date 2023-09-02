@@ -21,8 +21,8 @@ public class EncryptionController : ControllerBase
 
     public EncryptionController()
     {
-        string encryptionKey = EncryptionService.GenerateBase64Key();
-        Console.WriteLine($"Generated Key: {encryptionKey}"); // For demonstration purposes
+        string encryptionKey = EncryptionService.GenerateRandomKey();
+        Console.WriteLine($"Generated Key: {encryptionKey}");
         _encryptionService = new EncryptionService(encryptionKey);
     }
 
