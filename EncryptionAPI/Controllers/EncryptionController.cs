@@ -33,8 +33,8 @@ public class EncryptionController : ControllerBase
     [HttpGet("rsa-keys")]
     public IActionResult GenerateKeys()
     {
-        var (publicKey, _) = EncryptionService.GenerateRSAKeyPair();
-        return Ok(new { PublicKey = publicKey });
+        var (publicKey, privateKey) = EncryptionService.GenerateRSAKeyPair();
+        return Ok(new { PublicKey = publicKey, PrivateKey = privateKey });
     }
 
     [HttpPost("encrypt")]
@@ -45,9 +45,12 @@ public class EncryptionController : ControllerBase
 
         try
         {
-            string encryptedText = _encryptionService.EncryptString(request.PlainText);
+            string sessionKey = EncryptionService.GenerateRandomKey();
+            EncryptionService sessionEncryptionService = new EncryptionService(sessionKey);
+
+            string encryptedText = sessionEncryptionService.EncryptString(request.PlainText);
             
-            string encryptedSymmetricKey = EncryptWithPublicKey(_encryptionKey, request.PublicKey);
+            string encryptedSymmetricKey = EncryptWithPublicKey(sessionKey, request.PublicKey);
             
             return Ok(new { EncryptedText = encryptedText, EncryptedSymmetricKey = encryptedSymmetricKey });
         }
@@ -67,12 +70,9 @@ public class EncryptionController : ControllerBase
         {
             string decryptedSymmetricKey = DecryptWithPrivateKey(request.EncryptedSymmetricKey, request.PrivateKey);
             
-            if (decryptedSymmetricKey != _encryptionKey)
-            {
-                return BadRequest("Invalid symmetric key provided.");
-            }
+            EncryptionService sessionEncryptionService = new EncryptionService(decryptedSymmetricKey);
 
-            string decryptedText = _encryptionService.DecryptString(request.CipherText);
+            string decryptedText = sessionEncryptionService.DecryptString(request.CipherText);
             return Ok(decryptedText);
         }
         catch (Exception ex)
