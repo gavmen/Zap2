@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ChatApp.Services;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Cors;
 
 public class EncryptionRequest
 {
@@ -18,6 +19,7 @@ public class DecryptionRequest
 
 [ApiController]
 [Route("[controller]")]
+[EnableCors("AllowAllOrigins")]
 public class EncryptionController : ControllerBase
 {
     private readonly EncryptionService _encryptionService;
@@ -40,22 +42,30 @@ public class EncryptionController : ControllerBase
     [HttpPost("encrypt")]
     public ActionResult<string> Encrypt([FromBody] EncryptionRequest request)
     {
+        Console.WriteLine($"Received PlainText: {request.PlainText}");
+        Console.WriteLine($"Received PublicKey: {request.PublicKey}");
+
         if (request.PlainText == null || request.PublicKey == null)
             return BadRequest("Missing required parameters.");
 
         try
         {
             string sessionKey = EncryptionService.GenerateRandomKey();
+            Console.WriteLine($"Generated Session Key: {sessionKey}");
+
             EncryptionService sessionEncryptionService = new EncryptionService(sessionKey);
 
             string encryptedText = sessionEncryptionService.EncryptString(request.PlainText);
-            
+            Console.WriteLine($"Encrypted Text: {encryptedText}");
+
             string encryptedSymmetricKey = EncryptWithPublicKey(sessionKey, request.PublicKey);
-            
+            Console.WriteLine($"Encrypted Symmetric Key: {encryptedSymmetricKey}");
+
             return Ok(new { EncryptedText = encryptedText, EncryptedSymmetricKey = encryptedSymmetricKey });
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Exception: {ex}");
             return BadRequest($"Error encrypting: {ex.Message}");
         }
     }
@@ -63,6 +73,10 @@ public class EncryptionController : ControllerBase
     [HttpPost("decrypt")]
     public ActionResult<string> Decrypt([FromBody] DecryptionRequest request)
     {
+        Console.WriteLine($"Received CipherText: {request.CipherText}");
+        Console.WriteLine($"Received EncryptedSymmetricKey: {request.EncryptedSymmetricKey}");
+        Console.WriteLine($"Received PrivateKey: {request.PrivateKey?.Substring(0, 50)}...");
+
         if (request.CipherText == null || request.EncryptedSymmetricKey == null || request.PrivateKey == null)
             return BadRequest("Missing required parameters.");
 
@@ -70,13 +84,19 @@ public class EncryptionController : ControllerBase
         {
             string decryptedSymmetricKey = DecryptWithPrivateKey(request.EncryptedSymmetricKey, request.PrivateKey);
             
+            Console.WriteLine($"Decrypted Symmetric Key: {decryptedSymmetricKey}");
+
             EncryptionService sessionEncryptionService = new EncryptionService(decryptedSymmetricKey);
 
             string decryptedText = sessionEncryptionService.DecryptString(request.CipherText);
+            
+            Console.WriteLine($"Decrypted Text: {decryptedText}");
+
             return Ok(decryptedText);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Error decrypting: {ex}");
             return BadRequest($"Error decrypting: {ex.Message}");
         }
     }
