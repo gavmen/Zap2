@@ -1,16 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using ChatApp.Services;
-using System;
+using System.Security.Cryptography;
+using System.Text;
 
 public class EncryptionRequest
 {
     public string? PlainText { get; set; }
-    public string? EncryptedSymmetricKey { get; set; }
+    public string? PublicKey { get; set; }
 }
 
 public class DecryptionRequest
 {
     public string? CipherText { get; set; }
+    public string? EncryptedSymmetricKey { get; set; } 
     public string? PrivateKey { get; set; }
 }
 
@@ -28,25 +30,26 @@ public class EncryptionController : ControllerBase
         _encryptionService = new EncryptionService(_encryptionKey);
     }
 
-    [HttpGet("generate-keys")]
+    [HttpGet("rsa-keys")]
     public IActionResult GenerateKeys()
     {
-        var (publicKey, privateKey) = EncryptionService.GenerateRSAKeyPair();
-        return Ok(new { PublicKey = publicKey, PrivateKey = privateKey });
+        var (publicKey, _) = EncryptionService.GenerateRSAKeyPair();
+        return Ok(new { PublicKey = publicKey });
     }
 
     [HttpPost("encrypt")]
     public ActionResult<string> Encrypt([FromBody] EncryptionRequest request)
     {
+        if (request.PlainText == null || request.PublicKey == null)
+            return BadRequest("Missing required parameters.");
+
         try
         {
-            if (string.IsNullOrEmpty(request.EncryptedSymmetricKey))
-                return BadRequest("Encrypted symmetric key is required.");
-
-            string decryptedSymmetricKey = EncryptionService.DecryptSymmetricKeyWithPrivateKey(request.EncryptedSymmetricKey, _encryptionKey);
-
             string encryptedText = _encryptionService.EncryptString(request.PlainText);
-            return Ok(encryptedText);
+            
+            string encryptedSymmetricKey = EncryptWithPublicKey(_encryptionKey, request.PublicKey);
+            
+            return Ok(new { EncryptedText = encryptedText, EncryptedSymmetricKey = encryptedSymmetricKey });
         }
         catch (Exception ex)
         {
@@ -57,12 +60,17 @@ public class EncryptionController : ControllerBase
     [HttpPost("decrypt")]
     public ActionResult<string> Decrypt([FromBody] DecryptionRequest request)
     {
+        if (request.CipherText == null || request.EncryptedSymmetricKey == null || request.PrivateKey == null)
+            return BadRequest("Missing required parameters.");
+
         try
         {
-            if (string.IsNullOrEmpty(request.PrivateKey))
-                return BadRequest("Private key is required.");
-
-            string decryptedSymmetricKey = EncryptionService.DecryptSymmetricKeyWithPrivateKey(_encryptionKey, request.PrivateKey);
+            string decryptedSymmetricKey = DecryptWithPrivateKey(request.EncryptedSymmetricKey, request.PrivateKey);
+            
+            if (decryptedSymmetricKey != _encryptionKey)
+            {
+                return BadRequest("Invalid symmetric key provided.");
+            }
 
             string decryptedText = _encryptionService.DecryptString(request.CipherText);
             return Ok(decryptedText);
@@ -70,6 +78,28 @@ public class EncryptionController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest($"Error decrypting: {ex.Message}");
+        }
+    }
+
+    public static string EncryptWithPublicKey(string dataToEncrypt, string publicKey)
+    {
+        byte[] dataToEncryptBytes = Encoding.UTF8.GetBytes(dataToEncrypt);
+        using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048))
+        {
+            rsa.FromXmlString(publicKey);
+            byte[] encryptedData = rsa.Encrypt(dataToEncryptBytes, true);
+            return Convert.ToBase64String(encryptedData);
+        }
+    }
+
+    public static string DecryptWithPrivateKey(string dataToDecrypt, string privateKey)
+    {
+        byte[] dataToDecryptBytes = Convert.FromBase64String(dataToDecrypt);
+        using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048))
+        {
+            rsa.FromXmlString(privateKey);
+            byte[] decryptedData = rsa.Decrypt(dataToDecryptBytes, true);
+            return Encoding.UTF8.GetString(decryptedData);
         }
     }
 }
