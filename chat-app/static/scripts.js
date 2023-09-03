@@ -6,6 +6,15 @@ socket.onopen = () => {
     console.log("WebSocket is now open.");
 };
 
+// Limit chars on logs (to delete) //////
+function truncate(str, maxLength) {
+    if (str.length <= maxLength) {
+        return str;
+    }
+    return str.slice(0, maxLength) + '...';
+}
+/////////////////////////////////////////
+
 const chatBox = document.getElementById("chat-box");
 const messageInput = document.getElementById("message-input");
 const sendButton = document.getElementById("send-button");
@@ -23,8 +32,8 @@ async function fetchAndStoreKeys() {
         privateKey = data.privateKey;
         console.log("Keys fetched successfully!");
         console.log("Server response:", data);
-        console.log("Public: " + publicKey);
-        console.log("Private: " + privateKey);
+        console.log(truncate("Public: " + publicKey, 50));
+        console.log(truncate("Private: " + privateKey, 50));
     } catch (error) {
         console.error('Error fetching the keys:', error.message);
     }
@@ -55,8 +64,8 @@ async function encryptMessage(message) {
         }
 
         const data = await response.json();
-        console.log('-1:' + data.encryptedText);
-        console.log('-2:' + data.encryptedSymmetricKey);
+        console.log(truncate('-1:' + data.encryptedText, 50));
+        console.log(truncate('-2:' + data.encryptedSymmetricKey, 50));
         return { encryptedText: data.encryptedText, encryptedSymmetricKey: data.encryptedSymmetricKey};
     } catch (error) {
         console.error('Error encrypting the message:', error.message);
@@ -64,7 +73,7 @@ async function encryptMessage(message) {
 }
 
 async function decryptMessage(encryptedText, encryptedSymmetricKey) {
-    console.log('0:' + encryptedSymmetricKey)
+    console.log(truncate('0:' + encryptedSymmetricKey, 50))
     try {
         const response = await fetch('http://localhost:5202/encryption/decrypt', {
             method: 'POST',
@@ -77,9 +86,9 @@ async function decryptMessage(encryptedText, encryptedSymmetricKey) {
                 PrivateKey: privateKey
             })
         });
-        console.log('1:' + encryptedText)
-        console.log('2:' + encryptedSymmetricKey)
-        console.log('3:' + privateKey)
+        console.log(truncate('1:' + encryptedText, 50))
+        console.log(truncate('2:' + encryptedSymmetricKey, 50))
+        console.log(truncate('3:' + privateKey, 50))
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
@@ -124,17 +133,14 @@ async function sendMessage(message) {
             encryptedSymmetricKey: encryptedData.encryptedSymmetricKey 
         }));
 
-        socket.send(JSON.stringify({ sender: userId, content: encryptedData.encryptedText }));
-        internal.InsertMessage(sender, encryptedData.encryptedText);
         console.log("Message sent!");
-        console.log(userId);
-        console.log(sender);
-        console.log(content);
-        console.log(encryptedData.encryptedText);
+        console.log("User ID:", userId);
+        console.log("Encrypted Message:", encryptedData.encryptedText);
     } else {
         console.log("WebSocket is not in the OPEN state.");
     }
 }
+
 
 
 sendButton.addEventListener("click", () => {

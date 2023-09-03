@@ -59,7 +59,7 @@ public class EncryptionController : ControllerBase
             Console.WriteLine($"Encrypted Text: {encryptedText}");
 
             string encryptedSymmetricKey = EncryptWithPublicKey(sessionKey, request.PublicKey);
-            Console.WriteLine($"Encrypted Symmetric Key: {encryptedSymmetricKey}");
+            Console.WriteLine($"Encrypted Symmetric Key: {encryptedSymmetricKey?.Substring(0, 10)}");
 
             return Ok(new { EncryptedText = encryptedText, EncryptedSymmetricKey = encryptedSymmetricKey });
         }
@@ -75,7 +75,7 @@ public class EncryptionController : ControllerBase
     {
         Console.WriteLine($"Received CipherText: {request.CipherText}");
         Console.WriteLine($"Received EncryptedSymmetricKey: {request.EncryptedSymmetricKey}");
-        Console.WriteLine($"Received PrivateKey: {request.PrivateKey?.Substring(0, 50)}...");
+        Console.WriteLine($"Received PrivateKey: {request.PrivateKey?.Substring(0, 10)}...");
 
         if (request.CipherText == null || request.EncryptedSymmetricKey == null || request.PrivateKey == null)
             return BadRequest("Missing required parameters.");
