@@ -29,7 +29,7 @@ func (m *manager) Start() {
 		select {
 		case client := <-m.Register:
 			// Check if username is already taken
-			if existingClient, exists := m.UserClients[client.User]; exists {
+			if _, exists := m.UserClients[client.User]; exists {
 				// Send error message to the new client
 				errorMsg := map[string]interface{}{
 					"type":    "error",

@@ -51,7 +51,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 
 	client := &internal.Client{
 		Socket:    conn,
-		Send:      make(chan []byte),
+		Send:      make(chan []byte, 256),
 		User:      user,
 		PublicKey: publicKey, // Assign public key
 	}
