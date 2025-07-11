@@ -2,6 +2,7 @@ package internal
 
 import (
 	// "chat-app/db"
+	"encoding/json"
 	"fmt"
 	// "log"
 
@@ -9,16 +10,22 @@ import (
 )
 
 type Client struct {
-	Socket *websocket.Conn
-	Send   chan []byte
-	User   string
+	Socket    *websocket.Conn
+	Send      chan []byte
+	User      string
+	PublicKey string
+}
+
+type MessageData struct {
+	Client  *Client
+	Message map[string]interface{}
 }
 
 func (c *Client) Read() {
-	// defer func() {
-	//     Manager.Unregister <- c
-	//     c.Socket.Close()
-	// }()
+	defer func() {
+		Manager.Unregister <- c
+		c.Socket.Close()
+	}()
 
 	// rows, err := db.Db.Query("SELECT content FROM messages WHERE user = ?", c.User)
 	// if err != nil {
@@ -40,10 +47,22 @@ func (c *Client) Read() {
 	for {
 		_, message, err := c.Socket.ReadMessage()
 		if err != nil {
+			Manager.Unregister <- c
 			break
 		}
-		Manager.Broadcast <- message
-		// fmt.Println("Received message from", c.User, ":", string(message))
+		
+		// Try to parse as JSON message
+		var msgData map[string]interface{}
+		if err := json.Unmarshal(message, &msgData); err == nil {
+			// Handle structured message
+			Manager.HandleMessage <- &MessageData{
+				Client:  c,
+				Message: msgData,
+			}
+		} else {
+			// Fallback: treat as plain text broadcast
+			Manager.Broadcast <- message
+		}
 	}
 }
 

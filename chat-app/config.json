@@ -1,0 +1,25 @@
+{
+  "server": {
+    "port": 8080,
+    "host": "localhost",
+    "static_dir": "static"
+  },
+  "database": {
+    "enabled": false,
+    "dsn": "gabriel:password@tcp(localhost:3306)/chat_app?parseTime=true",
+    "auto_migrate": true
+  },
+  "security": {
+    "cors_enabled": true,
+    "max_message_size": 4096,
+    "rate_limit": {
+      "enabled": false,
+      "messages_per_minute": 60
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "file": "logs/chat.log"
+  }
+}

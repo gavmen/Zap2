@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App Test</title>
+    <style>
+        body {
+            background-color: #2b2b2b;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #3a3a3a;
+            border-radius: 8px;
+        }
+        
+        button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background-color: #357abd;
+        }
+        
+        .status {
+            padding: 5px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        
+        .success { background-color: #27ae60; }
+        .error { background-color: #e74c3c; }
+        .info { background-color: #3498db; }
+        
+        pre {
+            background-color: #2b2b2b;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Secure Chat App - Test Page</h1>
+    
+    <div class="test-section">
+        <h3>1. Key Generation Test</h3>
+        <button onclick="testKeyGeneration()">Test Key Generation</button>
+        <div id="keyStatus"></div>
+        <pre id="keyDetails"></pre>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. WebSocket Connection Test</h3>
+        <input type="text" id="testUsername" placeholder="Enter username" value="TestUser1">
+        <button onclick="testConnection()">Test Connection</button>
+        <div id="connectionStatus"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Encryption Test</h3>
+        <input type="text" id="testMessage" placeholder="Test message" value="Hello, this is a test message!">
+        <button onclick="testEncryption()">Test Encryption/Decryption</button>
+        <div id="encryptionStatus"></div>
+        <pre id="encryptionDetails"></pre>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. Public Key Retrieval Test</h3>
+        <input type="text" id="targetUser" placeholder="Target username">
+        <button onclick="testPublicKeyRetrieval()">Test Public Key Retrieval</button>
+        <div id="keyRetrievalStatus"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>5. Live Chat Test</h3>
+        <a href="/">Go to Main Chat Interface</a>
+    </div>
+
+    <div class="test-section">
+        <h3>6. Global Messaging Test</h3>
+        <input type="text" id="globalTestMessage" placeholder="Test global message" value="Hello everyone! This is a global message.">
+        <button onclick="testGlobalMessage()">Test Global Message</button>
+        <div id="globalMessageStatus"></div>
+    </div>
+
+    <script>
+        let testKeys = null;
+        let testSocket = null;
+        
+        async function testKeyGeneration() {
+            const status = document.getElementById('keyStatus');
+            const details = document.getElementById('keyDetails');
+            
+            try {
+                status.innerHTML = '<div class="status info">Generating RSA key pair...</div>';
+                
+                const publicKeyParams = {
+                    name: "RSA-OAEP",
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                    hash: "SHA-256",
+                };
+                
+                const keyPair = await window.crypto.subtle.generateKey(
+                    publicKeyParams,
+                    true,
+                    ["encrypt", "decrypt"]
+                );
+
+                const publicKeyData = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+                const publicKeyString = btoa(String.fromCharCode.apply(null, new Uint8Array(publicKeyData)));
+                
+                const privateKeyData = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+                const privateKey = await window.crypto.subtle.importKey(
+                    "pkcs8",
+                    privateKeyData,
+                    publicKeyParams,
+                    false,
+                    ["decrypt"]
+                );
+                
+                testKeys = {
+                    public: keyPair.publicKey,
+                    private: privateKey,
+                    publicString: publicKeyString
+                };
+                
+                status.innerHTML = '<div class="status success">✓ Keys generated successfully!</div>';
+                details.textContent = `Public Key (Base64, first 100 chars): ${publicKeyString.substring(0, 100)}...
+Private Key: [Non-extractable CryptoKey object]
+Key Length: 2048 bits`;
+                
+            } catch (error) {
+                status.innerHTML = '<div class="status error">✗ Key generation failed</div>';
+                details.textContent = `Error: ${error.message}`;
+                console.error('Key generation error:', error);
+            }
+        }
+        
+        async function testConnection() {
+            const status = document.getElementById('connectionStatus');
+            const username = document.getElementById('testUsername').value || 'TestUser1';
+            
+            if (!testKeys) {
+                status.innerHTML = '<div class="status error">✗ Generate keys first!</div>';
+                return;
+            }
+            
+            try {
+                status.innerHTML = '<div class="status info">Connecting to WebSocket...</div>';
+                
+                testSocket = new WebSocket(`ws://${window.location.host}/ws?user=${encodeURIComponent(username)}&publicKey=${encodeURIComponent(testKeys.publicString)}`);
+                
+                testSocket.onopen = () => {
+                    status.innerHTML = '<div class="status success">✓ Connected to WebSocket!</div>';
+                };
+                
+                testSocket.onmessage = (event) => {
+                    console.log('Received message:', event.data);
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'userList') {
+                            status.innerHTML += `<div class="status info">User list received: ${data.users.join(', ')}</div>`;
+                        }
+                    } catch (e) {
+                        console.log('Non-JSON message:', event.data);
+                    }
+                };
+                
+                testSocket.onerror = (error) => {
+                    status.innerHTML = '<div class="status error">✗ Connection error</div>';
+                    console.error('WebSocket error:', error);
+                };
+                
+                testSocket.onclose = () => {
+                    status.innerHTML += '<div class="status info">Connection closed</div>';
+                };
+                
+            } catch (error) {
+                status.innerHTML = '<div class="status error">✗ Connection failed</div>';
+                console.error('Connection error:', error);
+            }
+        }
+        
+        async function testEncryption() {
+            const status = document.getElementById('encryptionStatus');
+            const details = document.getElementById('encryptionDetails');
+            const message = document.getElementById('testMessage').value;
+            
+            if (!testKeys) {
+                status.innerHTML = '<div class="status error">✗ Generate keys first!</div>';
+                return;
+            }
+            
+            try {
+                status.innerHTML = '<div class="status info">Testing encryption/decryption...</div>';
+                
+                // Encrypt with public key
+                const encoder = new TextEncoder();
+                const data = encoder.encode(message);
+                const encrypted = await window.crypto.subtle.encrypt(
+                    { name: "RSA-OAEP" },
+                    testKeys.public,
+                    data
+                );
+                const encryptedString = btoa(String.fromCharCode.apply(null, new Uint8Array(encrypted)));
+                
+                // Decrypt with private key
+                const encryptedData = Uint8Array.from(atob(encryptedString), c => c.charCodeAt(0));
+                const decrypted = await window.crypto.subtle.decrypt(
+                    { name: "RSA-OAEP" },
+                    testKeys.private,
+                    encryptedData
+                );
+                const decoder = new TextDecoder();
+                const decryptedMessage = decoder.decode(decrypted);
+                
+                if (decryptedMessage === message) {
+                    status.innerHTML = '<div class="status success">✓ Encryption/Decryption successful!</div>';
+                    details.textContent = `Original: ${message}
+Encrypted (Base64, first 100 chars): ${encryptedString.substring(0, 100)}...
+Decrypted: ${decryptedMessage}
+Match: ${decryptedMessage === message ? 'YES' : 'NO'}`;
+                } else {
+                    status.innerHTML = '<div class="status error">✗ Decryption mismatch!</div>';
+                    details.textContent = `Original: ${message}
+Decrypted: ${decryptedMessage}`;
+                }
+                
+            } catch (error) {
+                status.innerHTML = '<div class="status error">✗ Encryption test failed</div>';
+                details.textContent = `Error: ${error.message}`;
+                console.error('Encryption error:', error);
+            }
+        }
+        
+        async function testPublicKeyRetrieval() {
+            const status = document.getElementById('keyRetrievalStatus');
+            const targetUser = document.getElementById('targetUser').value;
+            
+            if (!targetUser) {
+                status.innerHTML = '<div class="status error">✗ Enter a target username!</div>';
+                return;
+            }
+            
+            try {
+                status.innerHTML = '<div class="status info">Fetching public key...</div>';
+                
+                const response = await fetch(`http://${window.location.host}/publicKey?user=${encodeURIComponent(targetUser)}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    status.innerHTML = '<div class="status success">✓ Public key retrieved!</div>';
+                    console.log('Retrieved public key:', data.publicKey);
+                } else {
+                    status.innerHTML = '<div class="status error">✗ User not found or no public key</div>';
+                }
+                
+            } catch (error) {
+                status.innerHTML = '<div class="status error">✗ Failed to retrieve public key</div>';
+                console.error('Public key retrieval error:', error);
+            }
+        }
+
+        async function testGlobalMessage() {
+            const status = document.getElementById('globalMessageStatus');
+            const message = document.getElementById('globalTestMessage').value;
+            
+            if (!testSocket || testSocket.readyState !== WebSocket.OPEN) {
+                status.innerHTML = '<div class="status error">✗ WebSocket not connected! Run connection test first.</div>';
+                return;
+            }
+            
+            try {
+                status.innerHTML = '<div class="status info">Sending global message...</div>';
+                
+                const messageData = {
+                    type: 'globalMessage',
+                    content: message,
+                    sender: testUsername.value || 'TestUser1',
+                    timestamp: Date.now()
+                };
+                
+                testSocket.send(JSON.stringify(messageData));
+                status.innerHTML = '<div class="status success">✓ Global message sent!</div>';
+                
+                // Listen for the message to come back
+                const originalOnMessage = testSocket.onmessage;
+                testSocket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'globalMessage' && data.content === message) {
+                            status.innerHTML += '<div class="status success">✓ Global message received back!</div>';
+                        }
+                    } catch (e) {
+                        // Ignore non-JSON messages
+                    }
+                    if (originalOnMessage) originalOnMessage(event);
+                };
+                
+            } catch (error) {
+                status.innerHTML = '<div class="status error">✗ Failed to send global message</div>';
+                console.error('Global message error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

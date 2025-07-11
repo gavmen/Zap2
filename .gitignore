@@ -1,0 +1,101 @@
+# Project Documentation (Dynamic)
+CURRENT.md
+
+# Go Build Artifacts
+chat-app/chat-app
+chat-app/chat-app.exe
+chat-app/*.exe
+chat-app/*.dll
+chat-app/*.so
+chat-app/*.dylib
+
+# Go Test Files
+*.test
+*.out
+coverage.txt
+
+# Go Dependency Downloads
+vendor/
+pkg/mod/
+
+# C# Build Artifacts (.NET)
+EncryptionAPI/bin/
+EncryptionAPI/obj/
+EncryptionAPI/*.user
+EncryptionAPI/*.suo
+EncryptionAPI/*.userprefs
+EncryptionAPI/.vs/
+
+# Logs and Temporary Files
+*.log
+*.tmp
+*.temp
+chat-app/*.log
+EncryptionAPI/*.log
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration Files with Secrets
+config.local.json
+.env
+.env.local
+.env.production
+appsettings.Local.json
+appsettings.Production.json
+
+# IDE and Editor Files
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Node.js (for potential future frontend tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# SSL Certificates and Keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+certs/
+
+# Backup Files
+*.bak
+*.backup
+*.old
+
+# Runtime and Process Files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage Reports
+coverage/
+*.cover
+*.py,cover
+
+# Local Development Overrides
+docker-compose.override.yml
+.env.override

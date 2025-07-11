@@ -3,6 +3,7 @@ package main
 import (
 	// "chat-app/db"
 	"chat-app/internal"
+	"encoding/json" // Import the json package
 	"fmt"
 	"log"
 	"net/http"
@@ -22,20 +23,21 @@ var (
 )
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
-	dsn := "gabriel:password@tcp(localhost:3306)/chat_app?parseTime=true"
-	internal.InitDB(dsn)
+	// dsn := "gabriel:password@tcp(localhost:3306)/chat_app?parseTime=true"
+	// internal.InitDB(dsn)
 
 	fmt.Println("Connection Header:", r.Header.Get("Connection"))
 	fmt.Println("Upgrade Header:", r.Header.Get("Upgrade"))
 
 	user := r.URL.Query().Get("user")
+	publicKey := r.URL.Query().Get("publicKey") // Expect public key in query params
 
 	fmt.Println("User connected:", user)
 
 	if r.Method == http.MethodPost {
 		sender := r.FormValue("sender")
 		content := r.FormValue("content")
-		internal.InsertMessage(sender, content)
+		// internal.InsertMessage(sender, content)
 
 		internal.Manager.Broadcast <- []byte(sender + ": " + content)
 	}
@@ -48,9 +50,10 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	client := &internal.Client{
-		Socket: conn,
-		Send:   make(chan []byte),
-		User:   user,
+		Socket:    conn,
+		Send:      make(chan []byte),
+		User:      user,
+		PublicKey: publicKey, // Assign public key
 	}
 
 	internal.Manager.Register <- client
@@ -61,12 +64,32 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// db.InitDB()
-	internal.InitDB("gabriel:password@tcp(localhost:3306)/chat_app")
+	// internal.InitDB("gabriel:password@tcp(localhost:3306)/chat_app")
 
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/", fs)
 
 	http.HandleFunc("/ws", handleConnections)
+
+	// Add a new endpoint to get a user's public key
+	http.HandleFunc("/publicKey", func(w http.ResponseWriter, r *http.Request) {
+		user := r.URL.Query().Get("user")
+		if user == "" {
+			http.Error(w, "User not specified", http.StatusBadRequest)
+			return
+		}
+
+		publicKey, ok := internal.Manager.GetPublicKeyForUser(user)
+		if !ok {
+			http.Error(w, "User not found or has no public key", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		// Use json.NewEncoder for a safe and proper JSON response
+		json.NewEncoder(w).Encode(map[string]string{"publicKey": publicKey})
+	})
+
 	go internal.Manager.Start()
 
 	log.Println("Chat server started. Listening on :8080")
