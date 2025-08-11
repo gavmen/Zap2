@@ -14,8 +14,6 @@ A real-time chat application with end-to-end encrypted messaging capabilities, b
 
 ## Architecture
 
-## Architecture
-
 The application consists of two main components:
 
 1. **Go WebSocket Server**: Handles real-time messaging and user management
@@ -28,8 +26,6 @@ The application consists of two main components:
 - **Global Messages**: Unencrypted messages visible to all users
 - **Private Messages**: Encrypted with recipient's public key
 - **Public Key Exchange**: Server facilitates key distribution without accessing private keys
-
-## Setup
 
 ## Setup
 
@@ -78,8 +74,6 @@ The application consists of two main components:
 
 ## Usage
 
-## Usage
-
 ### Chat Modes
 
 #### Global Chat (Default)
@@ -102,8 +96,6 @@ The application consists of two main components:
    - **Global**: Type and press Enter - everyone sees your message
    - **Private**: Click "Private" button, select recipient, then type message
 4. Switch modes anytime using the Global/Private buttons
-
-## Configuration
 
 ## Configuration
 
@@ -143,9 +135,7 @@ PORT=8080
 ## Project Structure
 
 ```
-## Project Structure
 
-```
 chat-app/
 ├── main.go              # Main server application
 ├── internal/
@@ -179,9 +169,9 @@ This project is for educational purposes. Use responsibly and ensure compliance 
 ````
 ```
 
-## 🚧 Development Status
+## Development Status
 
-### ✅ Completed Features
+### Completed Features
 
 - [x] Browser-based RSA key generation
 - [x] End-to-end message encryption
@@ -191,14 +181,14 @@ This project is for educational purposes. Use responsibly and ensure compliance 
 - [x] Modern web interface
 - [x] Message display and UI
 
-### 🔄 In Progress
+### In Progress
 
 - [ ] User authentication system
 - [ ] Message persistence (database integration)
 - [ ] Error handling improvements
 - [ ] Mobile-responsive design
 
-### 📋 Planned Features
+### Planned Features
 
 - [ ] Group chat functionality
 - [ ] File sharing with encryption
@@ -206,7 +196,7 @@ This project is for educational purposes. Use responsibly and ensure compliance 
 - [ ] Push notifications
 - [ ] Advanced security features
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -214,10 +204,10 @@ This project is for educational purposes. Use responsibly and ensure compliance 
 4. Test thoroughly
 5. Submit a pull request
 
-## 📄 License
+## License
 
 This project is for educational and demonstration purposes. Use responsibly and ensure compliance with applicable laws and regulations regarding encryption software.
 
 ---
 
-**⚠️ Important Security Notice**: This is a demonstration application. For production use, conduct a thorough security audit and implement additional security measures as needed.
+** Important Security Notice**: This is a demonstration application. For production use, conduct a thorough security audit and implement additional security measures as needed.
